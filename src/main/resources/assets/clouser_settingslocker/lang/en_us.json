@@ -1,0 +1,11 @@
+{
+  "options.clouser": "Clouser",
+  "commands.keybind.success": "%s keybind is now set to %s!",
+  "commands.keybind.success.reset": "%s keybind is now reset!",
+  "commands.keybind.success.unbind": "%s keybind is now unbound!",
+  "commands.locksettings.success.lock": "%s option is now locked!",
+  "commands.locksettings.success.unlock": "%s option is now unlocked!",
+  "argument.binding.notfound": "No binding was found",
+  "argument.key.notfound": "No key was found",
+  "argument.setting.notfound": "No setting was found"
+}

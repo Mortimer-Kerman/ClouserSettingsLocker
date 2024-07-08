@@ -1,0 +1,41 @@
+{
+	"schemaVersion": 1,
+	"id": "clouser_settingslocker",
+	"version": "${version}",
+	"name": "Clouser settings locker",
+	"description": "Mod to lock precise settings to prevent breaking Clouser's maps",
+	"authors": [
+		"Mortimer Kerman"
+	],
+	"contact": {
+		"homepage": "https://mortimer-kerman.github.io/",
+		"sources": "https://github.com/Mortimer-Kerman/ClouserSettingsLocker"
+	},
+	"license": "MIT",
+	"icon": "assets/clouser_settingslocker/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"net.mortimer_kerman.clouser_settingslocker.ClouserSettingsLocker"
+		],
+		"client": [
+			"net.mortimer_kerman.clouser_settingslocker.ClouserSettingsLockerClient"
+		]
+	},
+	"mixins": [
+		"clouser_settingslocker.mixins.json",
+		{
+			"config": "clouser_settingslocker.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.15.10",
+		"minecraft": "~1.21",
+		"java": ">=21",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}

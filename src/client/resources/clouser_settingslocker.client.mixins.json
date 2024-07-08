@@ -1,0 +1,19 @@
+{
+  "required": true,
+  "package": "net.mortimer_kerman.clouser_settingslocker.mixin.client",
+  "compatibilityLevel": "JAVA_17",
+  "client": [
+    "ClickableWidgetMixin",
+    "KeyBindingEntryMixin",
+    "ScreenMixin",
+    "SimpleOptionMixin",
+    "SliderWidgetMixin",
+    "TypeMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "mixins": [
+    "LanguageMixin"
+  ]
+}
