@@ -12,7 +12,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.function.BiConsumer;
 
 @Mixin(Language.class)
-public class LanguageMixin implements LanguageMixinInterface {
+public abstract class LanguageMixin implements LanguageMixinInterface {
     @Shadow private static void load(BiConsumer<String, String> entryConsumer, String path) {}
 
     @Override

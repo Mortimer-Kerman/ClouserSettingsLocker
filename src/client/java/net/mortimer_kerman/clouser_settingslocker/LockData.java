@@ -159,7 +159,7 @@ public class LockData {
 
         for (String key : toggles) {
             grabbedData.put(key, true);
-            grabbedData.remove(key.replace(".toggle", ""));
+            if (!key.startsWith("key")) grabbedData.remove(key.replace(".toggle", ""));
         }
 
         return grabbedData;

@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ControlsListWidget.KeyBindingEntry.class)
-public class KeyBindingEntryMixin
+public abstract class KeyBindingEntryMixin
 {
     @Shadow @Final private ButtonWidget editButton;
 

@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 @Mixin(SimpleOption.class)
-public class SimpleOptionMixin implements SimpleOptionMixinInterface
+public abstract class SimpleOptionMixin implements SimpleOptionMixinInterface
 {
     @Shadow @Final Text text;
 

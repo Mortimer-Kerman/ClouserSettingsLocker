@@ -21,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.function.Consumer;
 
 @Mixin(SimpleOption.OptionSliderWidgetImpl.class)
-public final class SliderWidgetMixin extends ClickableWidgetMixin
+public abstract class SliderWidgetMixin extends ClickableWidgetMixin
 {
     @Shadow @Final private SimpleOption<?> option;
 

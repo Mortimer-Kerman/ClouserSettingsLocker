@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ClickableWidget.class)
-public class ClickableWidgetMixin
+public abstract class ClickableWidgetMixin
 {
     @Shadow private Text message;
 
