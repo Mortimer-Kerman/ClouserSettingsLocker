@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.option.OptionsScreen;
 import net.minecraft.client.option.GameOptions;
@@ -11,6 +12,7 @@ import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.registry.BuiltinRegistries;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.util.Identifier;
@@ -28,65 +30,63 @@ public class ClouserSettingsLockerClient implements ClientModInitializer
 		KEYS.addAll(((TypeMixin)(Object)InputUtil.Type.KEYSYM).getMap().values());
 		KEYS.addAll(((TypeMixin)(Object)InputUtil.Type.MOUSE).getMap().values());
 
-		ClientPlayNetworking.registerGlobalReceiver(Payloads.StringStringPayload.ID, (payload, context) -> {
-			switch (payload.strId()) {
-				case ClouserSettingsLocker.SET_KEYBIND -> context.client().execute(() -> {
+		ClientPlayNetworking.registerGlobalReceiver(ClouserSettingsLocker.SET_KEYBIND, ((client, handler, buf, responseSender) ->
+		{
+			String strBinding = buf.readString();
+			String strKey = buf.readString();
 
-					GameOptions options = context.client().options;
+			client.execute(() ->
+			{
+				GameOptions options = client.options;
 
-					String strBinding = payload.value1();
-					String strKey = payload.value2();
+				KeyBinding binding = null;
+				for (KeyBinding bind : options.allKeys)
+				{
+					if (bind.getTranslationKey().equals(strBinding)) binding = bind;
+				}
 
-					KeyBinding binding = null;
-					for (KeyBinding bind : options.allKeys)
-					{
-						if (bind.getTranslationKey().equals(strBinding)) binding = bind;
-					}
+				if (binding == null) return;
 
-					if (binding == null) return;
+				if (strKey.equals("RESET"))
+				{
+					options.setKeyCode(binding, binding.getDefaultKey());
+					KeyBinding.updateKeysByCode();
+					return;
+				}
 
-					if (strKey.equals("RESET"))
-					{
-						options.setKeyCode(binding, binding.getDefaultKey());
-						KeyBinding.updateKeysByCode();
-						return;
-					}
+				if (strKey.equals("NONE"))
+				{
+					options.setKeyCode(binding, InputUtil.UNKNOWN_KEY);
+					KeyBinding.updateKeysByCode();
+					return;
+				}
 
-					if (strKey.equals("NONE"))
-					{
-						options.setKeyCode(binding, InputUtil.UNKNOWN_KEY);
-						KeyBinding.updateKeysByCode();
-						return;
-					}
+				InputUtil.Key key = null;
+				for (InputUtil.Key input : KEYS)
+				{
+					if (input.getTranslationKey().endsWith(strKey)) key = input;
+				}
 
-					InputUtil.Key key = null;
-					for (InputUtil.Key input : KEYS)
-					{
-						if (input.getTranslationKey().endsWith(strKey)) key = input;
-					}
+				if (key != null) {
+					options.setKeyCode(binding, key);
+					KeyBinding.updateKeysByCode();
+				}
+			});
+		}));
 
-					if (key != null) {
-						options.setKeyCode(binding, key);
-						KeyBinding.updateKeysByCode();
-					}
-				});
-			}
-		});
+		ClientPlayNetworking.registerGlobalReceiver(ClouserSettingsLocker.LOCK_SETTINGS, ((client, handler, buf, responseSender) ->
+		{
+			String option = buf.readString();
+			boolean unlocked = buf.readBoolean();
 
-		ClientPlayNetworking.registerGlobalReceiver(Payloads.StringBoolPayload.ID, (payload, context) -> {
-			switch (payload.strId()) {
-				case ClouserSettingsLocker.LOCK_SETTINGS -> context.client().execute(() -> {
-
-					String option = payload.valueS();
-					boolean unlocked = payload.valueB();
-
-					if(LockData.data.containsKey(option)) {
-						LockData.data.replace(option, unlocked);
-						LockData.SaveData();
-					}
-				});
-			}
-		});
+			client.execute(() ->
+			{
+				if(LockData.data.containsKey(option)) {
+					LockData.data.replace(option, unlocked);
+					LockData.SaveData();
+				}
+			});
+		}));
 
 		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
 
@@ -95,7 +95,10 @@ public class ClouserSettingsLockerClient implements ClientModInitializer
 				bindings.append(bind.getTranslationKey()).append(";");
 			}
 			String finalBindings = bindings.toString();
-			MinecraftClient.getInstance().execute(() -> ClientPlayNetworking.send(new Payloads.StringPayload(ClouserSettingsLocker.RECORD_BINDINGS, finalBindings)));
+
+			PacketByteBuf recordBindings = PacketByteBufs.create();
+			recordBindings.writeString(finalBindings);
+			MinecraftClient.getInstance().execute(() -> ClientPlayNetworking.send(ClouserSettingsLocker.RECORD_BINDINGS, recordBindings));
 
 
 			StringBuilder keys = new StringBuilder();
@@ -103,7 +106,10 @@ public class ClouserSettingsLockerClient implements ClientModInitializer
 				keys.append(input.getTranslationKey()).append(";");
 			}
 			String finalKeys = keys.toString();
-			MinecraftClient.getInstance().execute(() -> ClientPlayNetworking.send(new Payloads.StringPayload(ClouserSettingsLocker.RECORD_KEYS, finalKeys)));
+
+			PacketByteBuf recordKeys = PacketByteBufs.create();
+			recordKeys.writeString(finalKeys);
+			MinecraftClient.getInstance().execute(() -> ClientPlayNetworking.send(ClouserSettingsLocker.RECORD_KEYS, recordKeys));
 
 
 			StringBuilder settings = new StringBuilder();
@@ -111,7 +117,10 @@ public class ClouserSettingsLockerClient implements ClientModInitializer
 				settings.append(setting).append(";");
 			}
 			String finalSettings = settings.toString();
-			MinecraftClient.getInstance().execute(() -> ClientPlayNetworking.send(new Payloads.StringPayload(ClouserSettingsLocker.RECORD_SETTINGS, finalSettings)));
+
+			PacketByteBuf recordSettings = PacketByteBufs.create();
+			recordSettings.writeString(finalSettings);
+			MinecraftClient.getInstance().execute(() -> ClientPlayNetworking.send(ClouserSettingsLocker.RECORD_SETTINGS, recordSettings));
 		});
 	}
 }

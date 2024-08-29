@@ -26,7 +26,7 @@ public abstract class SliderWidgetMixin extends ClickableWidgetMixin
     @Shadow @Final private SimpleOption<?> option;
 
     @Inject(method = "<init>", at=@At("RETURN"))
-    private void onCreate(GameOptions options, int x, int y, int width, int height, SimpleOption<?> option, @Coerce Object callbacks, SimpleOption.TooltipFactory<?> tooltipFactory, Consumer<?> changeCallback, boolean shouldApplyImmediately, CallbackInfo ci)
+    private void onCreate(GameOptions options, int x, int y, int width, int height, SimpleOption option, @Coerce Object callbacks, SimpleOption.TooltipFactory tooltipFactory, Consumer changeCallback, CallbackInfo ci)
     {
         String key = LockData.ExtractKey(((SimpleOptionMixinInterface)(Object)this.option).clouserSettingsLocker$getText().getContent());
         if (LockData.IsDisabled(key)) this.active = false;

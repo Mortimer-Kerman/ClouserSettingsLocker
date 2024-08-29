@@ -10,11 +10,13 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.command.suggestion.SuggestionProviders;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
@@ -29,11 +31,11 @@ public class ClouserSettingsLocker implements ModInitializer
 
 	public static final String MOD_ID = "clouser-settingslocker";
 
-	public static final String SET_KEYBIND = "set_keybind";
-	public static final String LOCK_SETTINGS = "lock_settings";
-	public static final String RECORD_BINDINGS = "record_bindings";
-	public static final String RECORD_KEYS = "record_keys";
-	public static final String RECORD_SETTINGS = "record_settings";
+	public static final Identifier SET_KEYBIND = new Identifier(MOD_ID, "set_keybind");
+	public static final Identifier LOCK_SETTINGS = new Identifier(MOD_ID, "lock_settings");
+	public static final Identifier RECORD_BINDINGS = new Identifier(MOD_ID, "record_bindings");
+	public static final Identifier RECORD_KEYS = new Identifier(MOD_ID, "record_keys");
+	public static final Identifier RECORD_SETTINGS = new Identifier(MOD_ID, "record_settings");
 
 	public static final SimpleCommandExceptionType BINDING_NOT_FOUND_EXCEPTION = new SimpleCommandExceptionType(Text.translatable("argument.binding.notfound"));
 	public static final SimpleCommandExceptionType KEY_NOT_FOUND_EXCEPTION = new SimpleCommandExceptionType(Text.translatable("argument.key.notfound"));
@@ -46,31 +48,29 @@ public class ClouserSettingsLocker implements ModInitializer
 	@Override
 	public void onInitialize()
 	{
-		Payloads.RegisterPayloads();
-
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> KeybindCommand(dispatcher));
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> LockSettingsCommand(dispatcher));
 
+		ServerPlayNetworking.registerGlobalReceiver(RECORD_BINDINGS, ((server, player, handler, buf, responseSender) ->
+		{
+			String[] bindings = buf.readString().split(";");
+			String[] finalBindings = Arrays.copyOf(bindings, bindings.length - 1);
+			server.execute(() -> BINDINGS.addAll(List.of(finalBindings)));
+		}));
 
-		ServerPlayNetworking.registerGlobalReceiver(Payloads.StringPayload.ID, (payload, context) -> {
-			switch (payload.strId()) {
-				case RECORD_BINDINGS -> context.server().execute(() -> {
-					String[] bindings = payload.value().split(";");
-					bindings = Arrays.copyOf(bindings, bindings.length - 1);
-					BINDINGS.addAll(List.of(bindings));
-				});
-				case RECORD_KEYS -> context.server().execute(() -> {
-					String[] keys = payload.value().split(";");
-					keys = Arrays.copyOf(keys, keys.length - 1);
-					KEYS.addAll(List.of(keys));
-				});
-				case RECORD_SETTINGS -> context.server().execute(() -> {
-					String[] settings = payload.value().split(";");
-					settings = Arrays.copyOf(settings, settings.length - 1);
-					SETTINGS.addAll(List.of(settings));
-				});
-			}
-		});
+		ServerPlayNetworking.registerGlobalReceiver(RECORD_KEYS, ((server, player, handler, buf, responseSender) ->
+		{
+			String[] keys = buf.readString().split(";");
+			String[] finalKeys = Arrays.copyOf(keys, keys.length - 1);
+			server.execute(() -> KEYS.addAll(List.of(finalKeys)));
+		}));
+
+		ServerPlayNetworking.registerGlobalReceiver(RECORD_SETTINGS, ((server, player, handler, buf, responseSender) ->
+		{
+			String[] settings = buf.readString().split(";");
+			String[] finalSettings = Arrays.copyOf(settings, settings.length - 1);
+			server.execute(() -> SETTINGS.addAll(List.of(finalSettings)));
+		}));
 	}
 
 	private static final SuggestionProvider<ServerCommandSource> BINDINGS_SUGGESTION_PROVIDER = SuggestionProviders
@@ -139,7 +139,10 @@ public class ClouserSettingsLocker implements ModInitializer
 		MinecraftServer server = src.getServer();
 		for (ServerPlayerEntity player : targets)
 		{
-			server.execute(() -> ServerPlayNetworking.send(player, new Payloads.StringStringPayload(SET_KEYBIND, binding, key)));
+			PacketByteBuf buf = PacketByteBufs.create();
+			buf.writeString(binding);
+			buf.writeString(key);
+			server.execute(() -> ServerPlayNetworking.send(player, SET_KEYBIND, buf));
 		}
 
 		switch (key)
@@ -191,7 +194,10 @@ public class ClouserSettingsLocker implements ModInitializer
 		MinecraftServer server = src.getServer();
 		for (ServerPlayerEntity player : targets)
 		{
-			server.execute(() -> ServerPlayNetworking.send(player, new Payloads.StringBoolPayload(LOCK_SETTINGS, option, unlocked)));
+			PacketByteBuf buf = PacketByteBufs.create();
+			buf.writeString(option);
+			buf.writeBoolean(unlocked);
+			server.execute(() -> ServerPlayNetworking.send(player, LOCK_SETTINGS, buf));
 		}
 
 		if (unlocked) src.sendFeedback(() -> Text.translatable("commands.locksettings.success.unlock", Text.translatable(option)), true);
