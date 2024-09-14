@@ -55,19 +55,14 @@ public class ClouserSettingsLocker implements ModInitializer
 		ServerPlayNetworking.registerGlobalReceiver(Payloads.StringPayload.ID, (payload, context) -> {
 			switch (payload.strId()) {
 				case RECORD_BINDINGS -> context.server().execute(() -> {
-					String[] bindings = payload.value().split(";");
-					bindings = Arrays.copyOf(bindings, bindings.length - 1);
-					BINDINGS.addAll(List.of(bindings));
+					BINDINGS.add(payload.value());
+					SETTINGS.add(payload.value());
 				});
 				case RECORD_KEYS -> context.server().execute(() -> {
-					String[] keys = payload.value().split(";");
-					keys = Arrays.copyOf(keys, keys.length - 1);
-					KEYS.addAll(List.of(keys));
+					KEYS.add(payload.value());
 				});
 				case RECORD_SETTINGS -> context.server().execute(() -> {
-					String[] settings = payload.value().split(";");
-					settings = Arrays.copyOf(settings, settings.length - 1);
-					SETTINGS.addAll(List.of(settings));
+					SETTINGS.add(payload.value());
 				});
 			}
 		});

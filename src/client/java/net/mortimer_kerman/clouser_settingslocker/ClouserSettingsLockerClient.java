@@ -88,30 +88,28 @@ public class ClouserSettingsLockerClient implements ClientModInitializer
 			}
 		});
 
-		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
-
-			StringBuilder bindings = new StringBuilder();
-			for (KeyBinding bind : client.options.allKeys) {
-				bindings.append(bind.getTranslationKey()).append(";");
+		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) ->
+		{
+			for (KeyBinding bind : client.options.allKeys)
+			{
+				String binding = bind.getTranslationKey();
+				ClouserSettingsLocker.BINDINGS.add(binding);
+				ClouserSettingsLocker.SETTINGS.add(binding);
+				client.execute(() -> ClientPlayNetworking.send(new Payloads.StringPayload(ClouserSettingsLocker.RECORD_BINDINGS, binding)));
 			}
-			String finalBindings = bindings.toString();
-			MinecraftClient.getInstance().execute(() -> ClientPlayNetworking.send(new Payloads.StringPayload(ClouserSettingsLocker.RECORD_BINDINGS, finalBindings)));
 
-
-			StringBuilder keys = new StringBuilder();
-			for (InputUtil.Key input : ((TypeMixin)(Object)InputUtil.Type.KEYSYM).getMap().values()) {
-				keys.append(input.getTranslationKey()).append(";");
+			for (InputUtil.Key input : ((TypeMixin)(Object)InputUtil.Type.KEYSYM).getMap().values())
+			{
+				String key = input.getTranslationKey();
+				ClouserSettingsLocker.KEYS.add(key);
+				MinecraftClient.getInstance().execute(() -> ClientPlayNetworking.send(new Payloads.StringPayload(ClouserSettingsLocker.RECORD_KEYS, key)));
 			}
-			String finalKeys = keys.toString();
-			MinecraftClient.getInstance().execute(() -> ClientPlayNetworking.send(new Payloads.StringPayload(ClouserSettingsLocker.RECORD_KEYS, finalKeys)));
 
-
-			StringBuilder settings = new StringBuilder();
-			for (String setting : LockData.data.keySet()) {
-				settings.append(setting).append(";");
+			for (String setting : LockData.data.keySet())
+			{
+				ClouserSettingsLocker.SETTINGS.add(setting);
+				MinecraftClient.getInstance().execute(() -> ClientPlayNetworking.send(new Payloads.StringPayload(ClouserSettingsLocker.RECORD_SETTINGS, setting)));
 			}
-			String finalSettings = settings.toString();
-			MinecraftClient.getInstance().execute(() -> ClientPlayNetworking.send(new Payloads.StringPayload(ClouserSettingsLocker.RECORD_SETTINGS, finalSettings)));
 		});
 	}
 }
