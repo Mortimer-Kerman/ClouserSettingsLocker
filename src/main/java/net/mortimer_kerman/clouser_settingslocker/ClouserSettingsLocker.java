@@ -53,23 +53,21 @@ public class ClouserSettingsLocker implements ModInitializer
 
 		ServerPlayNetworking.registerGlobalReceiver(RECORD_BINDINGS, ((server, player, handler, buf, responseSender) ->
 		{
-			String[] bindings = buf.readString().split(";");
-			String[] finalBindings = Arrays.copyOf(bindings, bindings.length - 1);
-			server.execute(() -> BINDINGS.addAll(List.of(finalBindings)));
+			String binding = buf.readString();
+			server.execute(() -> BINDINGS.add(binding));
+			server.execute(() -> SETTINGS.add(binding));
 		}));
 
 		ServerPlayNetworking.registerGlobalReceiver(RECORD_KEYS, ((server, player, handler, buf, responseSender) ->
 		{
-			String[] keys = buf.readString().split(";");
-			String[] finalKeys = Arrays.copyOf(keys, keys.length - 1);
-			server.execute(() -> KEYS.addAll(List.of(finalKeys)));
+			String key = buf.readString();
+			server.execute(() -> KEYS.add(key));
 		}));
 
 		ServerPlayNetworking.registerGlobalReceiver(RECORD_SETTINGS, ((server, player, handler, buf, responseSender) ->
 		{
-			String[] settings = buf.readString().split(";");
-			String[] finalSettings = Arrays.copyOf(settings, settings.length - 1);
-			server.execute(() -> SETTINGS.addAll(List.of(finalSettings)));
+			String setting = buf.readString();
+			server.execute(() -> SETTINGS.add(setting));
 		}));
 	}
 

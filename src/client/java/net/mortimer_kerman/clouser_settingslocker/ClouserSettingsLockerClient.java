@@ -88,39 +88,34 @@ public class ClouserSettingsLockerClient implements ClientModInitializer
 			});
 		}));
 
-		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
-
-			StringBuilder bindings = new StringBuilder();
-			for (KeyBinding bind : client.options.allKeys) {
-				bindings.append(bind.getTranslationKey()).append(";");
+		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) ->
+		{
+			for (KeyBinding bind : client.options.allKeys)
+			{
+				String binding = bind.getTranslationKey();
+				PacketByteBuf recordBindings = PacketByteBufs.create();
+				recordBindings.writeString(binding);
+				client.execute(() -> ClientPlayNetworking.send(ClouserSettingsLocker.RECORD_BINDINGS, recordBindings));
+				ClouserSettingsLocker.BINDINGS.add(binding);
+				ClouserSettingsLocker.SETTINGS.add(binding);
 			}
-			String finalBindings = bindings.toString();
 
-			PacketByteBuf recordBindings = PacketByteBufs.create();
-			recordBindings.writeString(finalBindings);
-			MinecraftClient.getInstance().execute(() -> ClientPlayNetworking.send(ClouserSettingsLocker.RECORD_BINDINGS, recordBindings));
-
-
-			StringBuilder keys = new StringBuilder();
-			for (InputUtil.Key input : ((TypeMixin)(Object)InputUtil.Type.KEYSYM).getMap().values()) {
-				keys.append(input.getTranslationKey()).append(";");
+			for (InputUtil.Key input : ((TypeMixin)(Object)InputUtil.Type.KEYSYM).getMap().values())
+			{
+				String key = input.getTranslationKey();
+				PacketByteBuf recordKeys = PacketByteBufs.create();
+				recordKeys.writeString(key);
+				client.execute(() -> ClientPlayNetworking.send(ClouserSettingsLocker.RECORD_KEYS, recordKeys));
+				ClouserSettingsLocker.KEYS.add(key);
 			}
-			String finalKeys = keys.toString();
 
-			PacketByteBuf recordKeys = PacketByteBufs.create();
-			recordKeys.writeString(finalKeys);
-			MinecraftClient.getInstance().execute(() -> ClientPlayNetworking.send(ClouserSettingsLocker.RECORD_KEYS, recordKeys));
-
-
-			StringBuilder settings = new StringBuilder();
-			for (String setting : LockData.data.keySet()) {
-				settings.append(setting).append(";");
+			for (String setting : LockData.data.keySet())
+			{
+				PacketByteBuf recordSettings = PacketByteBufs.create();
+				recordSettings.writeString(setting);
+				client.execute(() -> ClientPlayNetworking.send(ClouserSettingsLocker.RECORD_SETTINGS, recordSettings));
+				ClouserSettingsLocker.SETTINGS.add(setting);
 			}
-			String finalSettings = settings.toString();
-
-			PacketByteBuf recordSettings = PacketByteBufs.create();
-			recordSettings.writeString(finalSettings);
-			MinecraftClient.getInstance().execute(() -> ClientPlayNetworking.send(ClouserSettingsLocker.RECORD_SETTINGS, recordSettings));
 		});
 	}
 }
